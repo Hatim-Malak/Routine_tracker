@@ -1,6 +1,7 @@
 package Task_Tracker.Backend.models;
 
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
@@ -30,6 +31,6 @@ public class Task {
     private User user;
 
     @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
-    private List<TaskCompletion> completions;
+    private List<TaskCompletion> completions = new ArrayList<>();
 
 }
