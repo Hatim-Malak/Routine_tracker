@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import Task_Tracker.Backend.DTO.LoginRequest;
 import Task_Tracker.Backend.models.User;
 import Task_Tracker.Backend.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/auth")
@@ -66,9 +67,9 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(){
+    public ResponseEntity<String> logout(HttpServletRequest request){
         try {
-            return new ResponseEntity<>(service.logout(null),HttpStatus.OK);
+            return new ResponseEntity<>(service.logout(request),HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Internal serber error"+e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

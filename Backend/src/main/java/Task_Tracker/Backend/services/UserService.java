@@ -42,7 +42,7 @@ public class UserService {
     }
 
     public String logout(HttpServletRequest request) throws Exception{
-        String authHeader = request.getHeader("Autorization");
+        String authHeader = request.getHeader("Authorization");
         if(authHeader !=null && authHeader.startsWith("Bearer ")){
             String token = authHeader.substring(7);
 
