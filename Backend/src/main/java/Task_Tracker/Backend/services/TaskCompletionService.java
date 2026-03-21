@@ -91,20 +91,20 @@ public class TaskCompletionService {
         List<Task> routines = taskRepo.findByUser(user);
 
         LocalDate today = LocalDate.now();
-        LocalDate sevenDaysAgo = today.minusDays(6);
+        LocalDate thirtyDaysAgo = today.minusDays(29);
 
-        List<TaskCompletion> recentCompletion = taskCompletionRepo.findAllUserCompletionsFromDate(user.getId(), sevenDaysAgo);
+        List<TaskCompletion> recentCompletion = taskCompletionRepo.findAllUserCompletionsFromDate(user.getId(), thirtyDaysAgo);
 
-        List<LocalDate> last7Dates = new ArrayList<>();
-        for(int i =6;i>=0;i--){
-            last7Dates.add(today.minusDays(i));
+        List<LocalDate> last30Dates = new ArrayList<>();
+        for(int i =29;i>=0;i--){
+            last30Dates.add(today.minusDays(i));
         }
 
         List<RoutineWithHistoryResponse> responseList = new ArrayList<>();
 
         for(Task routine:routines){
             List<DailyStatus> history = new ArrayList<>();
-            for(LocalDate date:last7Dates){
+            for(LocalDate date:last30Dates){
                 boolean isCompleted = recentCompletion.stream()
                     .anyMatch(tc -> tc.getTask().getId().equals(routine.getId()) && tc.getCompletionDate().equals(date));
                 history.add(new DailyStatus(date.toString(), isCompleted));

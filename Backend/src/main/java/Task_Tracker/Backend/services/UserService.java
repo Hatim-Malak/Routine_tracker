@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import Task_Tracker.Backend.DTO.UserProfileResponse;
 import Task_Tracker.Backend.models.BlacklistedToken;
 import Task_Tracker.Backend.models.User;
 import Task_Tracker.Backend.repository.BlacklistedTokenRepo;
@@ -55,5 +56,15 @@ public class UserService {
             return "Successfully logout and the token has been blacklisted";
         }
         return "No token found in request";
+    }
+
+    public UserProfileResponse checkAuth(User user){
+        
+        UserProfileResponse safeProfile = new UserProfileResponse(
+            user.getId(), 
+            user.getUsername(), 
+            user.getEmail()
+        );
+        return safeProfile;
     }
 }

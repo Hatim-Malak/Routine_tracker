@@ -1,9 +1,12 @@
 package Task_Tracker.Backend.controllers;
 
 
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,11 +14,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import Task_Tracker.Backend.DTO.LoginRequest;
+import Task_Tracker.Backend.DTO.UserProfileResponse;
 import Task_Tracker.Backend.models.User;
+import Task_Tracker.Backend.services.UserPrincipal;
 import Task_Tracker.Backend.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 
-@RestController
+@RestController 
 @RequestMapping("/api/auth")
 public class UserController {
     @Autowired
@@ -70,6 +75,19 @@ public class UserController {
     public ResponseEntity<String> logout(HttpServletRequest request){
         try {
             return new ResponseEntity<>(service.logout(request),HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Internal serber error"+e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/check")
+    public ResponseEntity<UserProfileResponse> checkAuth(Authentication authentication){
+        try {
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            User user = userPrincipal.getUser();
+            UserProfileResponse userProfileResponse  = service.checkAuth(user);
+            return new ResponseEntity<>(userProfileResponse,HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Internal serber error"+e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
