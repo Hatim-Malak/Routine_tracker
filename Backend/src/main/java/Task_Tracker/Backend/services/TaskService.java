@@ -49,18 +49,7 @@ public class TaskService {
     @Transactional
     public List<Task> resetRoutine(List<TaskRequest> tasks,User user) throws Exception{
         taskRepo.deleteAllByUser(user);
-        List<Task> newTask = new ArrayList<>();
-        for(TaskRequest oldTask:tasks){
-            Task task = new Task();
-            task.setTitle(oldTask.getTitle());
-            task.setStartTime(oldTask.getStartTime());
-            task.setEndTime(oldTask.getEndTime());
-            task.setUser(user);
-
-            newTask.add(task);
-        }
-
-        return taskRepo.saveAll(newTask);
+        return createTask(tasks, user);
     }
 
     public Task updateSinglrTask(Integer taskId,TaskRequest request,User user) throws Exception{
