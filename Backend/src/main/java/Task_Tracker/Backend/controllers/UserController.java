@@ -16,7 +16,7 @@ import Task_Tracker.Backend.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class UserController {
     @Autowired
     private UserService service;
