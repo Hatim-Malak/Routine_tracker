@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import Task_Tracker.Backend.DTO.TaskRequest;
 import Task_Tracker.Backend.models.Task;
@@ -11,6 +12,7 @@ import Task_Tracker.Backend.models.User;
 import Task_Tracker.Backend.repository.TaskRepo;
 import jakarta.transaction.Transactional;
 
+@Service
 public class TaskService {
 
     @Autowired
