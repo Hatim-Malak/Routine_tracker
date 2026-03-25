@@ -1,11 +1,13 @@
 package Task_Tracker.Backend.services;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +29,14 @@ public class TaskCompletionService {
     @Autowired
     private TaskRepo taskRepo;
 
+    @Autowired
+    private CacheService cacheService;
+
+    private static final org.slf4j.Logger log =  LoggerFactory.getLogger(TaskCompletionService.class);
+
+    private static final String DASHBOARD_CACHE_PREFIX = "sashboardStats:userId:";
+    private static final String HISTORY_CACHE_PREFIX = "routinerId:userId:";
+
     public String toggleRoutineForToday(Integer routineId,User user) throws Exception{
         Task routine = taskRepo.findByIdAndUser(routineId, user)
             .orElseThrow(()->new RuntimeException("Routine not found or unauthorized"));
@@ -40,13 +50,6 @@ public class TaskCompletionService {
             taskCompletionRepo.delete(existingCompletion.get());
             return "Routine unchecked for today";
         }
-        else{
-            if(routine.getStartTime() != null && routine.getEndTime() != null){
-                if(now.isBefore(routine.getStartTime()) || now.isAfter(routine.getEndTime())){
-                    throw new RuntimeException("Outside of the allowed time window for this routine!");
-                }
-            }
-        }
 
         TaskCompletion newCompletion = new TaskCompletion();
         newCompletion.setTask(routine);
@@ -54,10 +57,23 @@ public class TaskCompletionService {
         newCompletion.setCompletionDate(today);
 
         taskCompletionRepo.save(newCompletion);
+
+        invalidateUserCache(user.getId());
         return "Routine is Successfully completed for today";
     }
 
     public DashBoardStatsResponse getDashboardStats(User user) {
+
+        String cacheKey = DASHBOARD_CACHE_PREFIX + user.getId();
+
+        try {
+            DashBoardStatsResponse cacheStats = cacheService.get(cacheKey, DashBoardStatsResponse.class);
+            if(cacheStats != null){
+                return cacheStats;
+            }
+        } catch (Exception e) {
+            log.warn("Re3dis error on fetching Dashboard ststs, falling back to db",e);
+        }
 
         LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
         List<TaskCompletion> recentCompletions = taskCompletionRepo.findAllUserCompletionsFromDate(user.getId(), thirtyDaysAgo);
@@ -82,12 +98,30 @@ public class TaskCompletionService {
             .map(tc -> tc.getCompletionDate().toString())
             .distinct() 
             .collect(Collectors.toList());
+        
+        DashBoardStatsResponse response = new DashBoardStatsResponse(consistencyData, breakdownData, activeDates);
 
+            try {
+                cacheService.set(cacheKey, response, Duration.ofHours(2));
+            } catch (Exception e) {
+                log.error("failed to cache dashboard stats",e);
+            }
 
-        return new DashBoardStatsResponse(consistencyData, breakdownData, activeDates);
+        return response;
     }
 
     public List<RoutineWithHistoryResponse> getRoutineWithWeekHistory(User user){
+        String cacheKey = HISTORY_CACHE_PREFIX + user.getId();
+
+        try {
+            RoutineWithHistoryResponse[] cachedArray = cacheService.get(cacheKey, RoutineWithHistoryResponse[].class);
+            if(cachedArray != null){
+                return Arrays.asList(cachedArray);
+            }
+        } catch (Exception e) {
+            log.warn("Redis error on fetching routine history, failling back to DB",e);
+        }
+
         List<Task> routines = taskRepo.findByUser(user);
 
         LocalDate today = LocalDate.now();
@@ -111,6 +145,22 @@ public class TaskCompletionService {
             }
             responseList.add(new RoutineWithHistoryResponse(routine.getId(), routine.getTitle(), routine.getStartTime(), routine.getEndTime(), history));
         }
+
+        try {
+            cacheService.set(cacheKey, responseList.toArray(new RoutineWithHistoryResponse[0]), Duration.ofHours(2));
+        } catch (Exception e) {
+            log.error("Failed to cache routine history", e);
+        }
+
         return responseList;
+    }
+
+    private void invalidateUserCache(Integer userId) {
+        try {
+            cacheService.delete(DASHBOARD_CACHE_PREFIX + userId);
+            cacheService.delete(HISTORY_CACHE_PREFIX + userId);
+        } catch (Exception e) {
+            log.error("Failed to invalidate cache for user: " + userId, e);
+        }
     }
 }

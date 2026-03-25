@@ -2,22 +2,22 @@ import { motion } from "framer-motion";
 import { useTask } from "../Store/UseTaskStore";
 import {
   ResponsiveContainer,
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ReTooltip,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { BarChart3, PieChart as PieChartIcon, Loader2 } from "lucide-react";
 
-const PIE_COLORS = ["#333333", "#706C61", "#E1F4F3", "#555555", "#999999", "#B0CCC9"];
+const PIE_COLORS = ["#333333", "#706C61", "#A6A399", "#E1F4F3", "#999999", "#B0CCC9"];
 
 /* ── Shared empty fallback ── */
 const EmptyState = ({ icon: Icon, title, subtitle }) => (
   <div className="flex flex-col items-center justify-center py-12 gap-3">
-    <div className="w-14 h-14 rounded-2xl bg-[#E1F4F3] flex items-center justify-center">
+    <div className="w-14 h-14 rounded-2xl bg-[#E1F4F3]/50 border border-[#E1F4F3] flex items-center justify-center shadow-inner">
       <Icon className="w-7 h-7 text-[#706C61]" />
     </div>
     <div className="text-center">
-      <p className="text-[#333333] font-semibold text-sm">{title}</p>
-      <p className="text-[#706C61] text-xs mt-1">{subtitle}</p>
+      <p className="text-[#333333] font-bold text-sm tracking-tight">{title}</p>
+      <p className="text-[#706C61] text-xs mt-1.5 font-medium">{subtitle}</p>
     </div>
   </div>
 );
@@ -26,20 +26,18 @@ const EmptyState = ({ icon: Icon, title, subtitle }) => (
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload?.length) return null;
   return (
-    <div className="bg-white rounded-lg shadow-lg border border-[#E1F4F3] px-3 py-2">
-      <p className="text-xs font-medium text-[#333333]">{label}</p>
+    <div className="bg-white/90 backdrop-blur-md border border-[#E1F4F3] shadow-2xl rounded-xl p-3.5 min-w-[120px]">
+      <p className="text-xs font-bold text-[#333333] mb-2 pb-2 border-b border-[#E1F4F3]/60">{label}</p>
       {payload.map((entry, i) => (
-        <p key={i} className="text-xs text-[#706C61]">
-          {entry.name}: <span className="font-semibold text-[#333333]">{entry.value}</span>
-        </p>
+        <div key={i} className="flex items-center justify-between gap-4 mt-2">
+          <span className="text-xs font-medium text-[#706C61]">{entry.name}</span>
+          <span className="text-sm font-extrabold text-[#333333]">{entry.value}</span>
+        </div>
       ))}
     </div>
   );
 };
 
-/* ════════════════════════════════════════
-   Consistency Bar Chart — named export
-   ════════════════════════════════════════ */
 export const ConsistencyChart = () => {
   const { stats, gettingStatsForGraph } = useTask();
 
@@ -47,7 +45,7 @@ export const ConsistencyChart = () => {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <Loader2 className="w-7 h-7 text-[#333333] animate-spin" />
-        <p className="text-sm text-[#706C61]">Loading stats…</p>
+        <p className="text-sm font-medium text-[#706C61]">Loading stats…</p>
       </div>
     );
   }
@@ -56,20 +54,43 @@ export const ConsistencyChart = () => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
-      <h3 className="text-sm font-semibold text-[#333333] mb-4 flex items-center gap-2">
-        <BarChart3 className="w-4 h-4" />
-        Consistency Graph
-      </h3>
       {data.length > 0 ? (
-        <div className="w-full h-64">
+        <div className="w-full h-72">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#333333" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#E1F4F3" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#706C61" }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} />
-              <YAxis tick={{ fontSize: 11, fill: "#706C61" }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <ReTooltip content={<CustomTooltip />} />
-              <Bar dataKey="totalCompleted" name="Completed" fill="#333333" radius={[6, 6, 0, 0]} maxBarSize={40} />
-            </BarChart>
+              <XAxis 
+                dataKey="date" 
+                tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} 
+                axisLine={{ stroke: "#E1F4F3" }} 
+                tickLine={false} 
+                tickMargin={12}
+              />
+              <YAxis 
+                tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} 
+                axisLine={false} 
+                tickLine={false} 
+                allowDecimals={false} 
+                tickMargin={12}
+              />
+              <ReTooltip content={<CustomTooltip />} cursor={{ stroke: '#E1F4F3', strokeWidth: 2, strokeDasharray: '4 4' }} />
+              <Area 
+                type="monotone" 
+                dataKey="totalCompleted" 
+                name="Completed" 
+                stroke="#333333" 
+                fillOpacity={1} 
+                fill="url(#colorCount)" 
+                strokeWidth={3} 
+                activeDot={{ r: 6, fill: "#333333", stroke: "#FFFFFF", strokeWidth: 2, shadow: "0 4px 10px rgba(0,0,0,0.1)" }}
+              />
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       ) : (
@@ -79,9 +100,6 @@ export const ConsistencyChart = () => {
   );
 };
 
-/* ════════════════════════════════════════
-   Breakdown Pie Chart — named export
-   ════════════════════════════════════════ */
 export const BreakdownChart = () => {
   const { stats, gettingStatsForGraph } = useTask();
 
@@ -89,7 +107,7 @@ export const BreakdownChart = () => {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3">
         <Loader2 className="w-7 h-7 text-[#333333] animate-spin" />
-        <p className="text-sm text-[#706C61]">Loading stats…</p>
+        <p className="text-sm font-medium text-[#706C61]">Loading stats…</p>
       </div>
     );
   }
@@ -98,10 +116,6 @@ export const BreakdownChart = () => {
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}>
-      <h3 className="text-sm font-semibold text-[#333333] mb-4 flex items-center gap-2">
-        <PieChartIcon className="w-4 h-4" />
-        Routine Breakdown
-      </h3>
       {data.length > 0 ? (
         <div className="w-full h-72">
           <ResponsiveContainer width="100%" height="100%">
@@ -110,18 +124,29 @@ export const BreakdownChart = () => {
                 data={data}
                 dataKey="completionCount"
                 nameKey="routineName"
-                cx="50%" cy="50%"
-                outerRadius={90} innerRadius={45}
-                paddingAngle={3} strokeWidth={2} stroke="#FFFFFF"
-                label={({ routineName, percent }) => `${routineName} (${(percent * 100).toFixed(0)}%)`}
-                labelLine={{ stroke: "#706C61", strokeWidth: 1 }}
+                cx="50%" cy="45%"
+                outerRadius={100} innerRadius={60}
+                paddingAngle={4}
+                label={false}
               >
                 {data.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={PIE_COLORS[index % PIE_COLORS.length]} 
+                    stroke="#FFFFFF" 
+                    strokeWidth={3}
+                    style={{ filter: "drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.05))" }}
+                  />
                 ))}
               </Pie>
               <ReTooltip content={<CustomTooltip />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px", color: "#706C61" }} />
+              <Legend 
+                iconType="circle" 
+                iconSize={8} 
+                verticalAlign="bottom" 
+                align="center"
+                wrapperStyle={{ fontSize: "12px", fontWeight: 500, color: "#706C61", paddingTop: "20px" }} 
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -132,7 +157,6 @@ export const BreakdownChart = () => {
   );
 };
 
-/* ── Default export: both combined (backward compat) ── */
 const StatGraph = () => (
   <div className="space-y-8">
     <ConsistencyChart />

@@ -1,5 +1,8 @@
 package Task_Tracker.Backend.services;
 
+import java.time.Duration;
+import java.util.Random;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,6 +30,9 @@ public class UserService {
 
     @Autowired
     private BlacklistedTokenRepo blacklistedTokenRepo;
+
+    @Autowired
+    private CacheService cacheService;
 
     public User register(User user) throws Exception{
         return repo.save(user);
@@ -59,12 +65,25 @@ public class UserService {
     }
 
     public UserProfileResponse checkAuth(User user){
-        
+
+        String key  ="user:profile:"+user.getId();
+
+        UserProfileResponse cached = cacheService.get(key, UserProfileResponse.class);
+
+        if(cached != null){
+            return cached;
+        }
+
         UserProfileResponse safeProfile = new UserProfileResponse(
             user.getId(), 
             user.getUsername(), 
             user.getEmail()
         );
+
+        Duration ttl = Duration.ofMinutes(10+new Random().nextInt(5));
+        cacheService.set(key, safeProfile, ttl);
+
         return safeProfile;
     }
+    
 }

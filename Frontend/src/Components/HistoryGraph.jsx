@@ -73,27 +73,17 @@ const HistoryGraph = () => {
     await getStatsForGraph();
   };
 
-  const isInteractive = (dayDateStr, startTimeStr, endTimeStr) => {
-    if (!dayDateStr || !startTimeStr || !endTimeStr) return false;
+  const isInteractive = (dayDateStr) => {
+    if (!dayDateStr) return false;
     
-    // Step A (Identify Today)
+    // Only check if the date is Today (ignore the time window)
     const todayObj = new Date();
     const yyyy = todayObj.getFullYear();
     const mm = String(todayObj.getMonth() + 1).padStart(2, '0');
     const dd = String(todayObj.getDate()).padStart(2, '0');
     const todayStr = `${yyyy}-${mm}-${dd}`;
 
-    if (dayDateStr.substring(0, 10) !== todayStr) return false; // Handing "YYYY-MM-DD..." format safely
-
-    // Step B (Parse Time safely)
-    const now = new Date();
-    const [startH, startM] = startTimeStr.split(':');
-    const [endH, endM] = endTimeStr.split(':');
-    
-    const start = new Date(now).setHours(parseInt(startH, 10), parseInt(startM, 10), 0);
-    const end = new Date(now).setHours(parseInt(endH, 10), parseInt(endM, 10), 0);
-    
-    return now.getTime() >= start && now.getTime() <= end;
+    return dayDateStr.substring(0, 10) === todayStr;
   };
 
   /* ── Loading ── */
