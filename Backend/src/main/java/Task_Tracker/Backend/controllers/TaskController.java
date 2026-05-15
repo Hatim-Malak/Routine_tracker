@@ -50,7 +50,7 @@ public class TaskController {
             String deleteMessage = taskService.deleteSingleTask(taskId, userPrincipal.getUser());
             return new ResponseEntity<>(deleteMessage,HttpStatus.OK);
         } catch (Exception e) {
-            System.out.println("Internal serber error"+e.getMessage());
+            System.out.println("Internal server error"+e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

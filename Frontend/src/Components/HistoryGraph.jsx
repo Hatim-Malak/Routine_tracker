@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTask } from "../Store/UseTaskStore";
 import { CalendarDays, Loader2, Pencil, Trash2, X, Save } from "lucide-react";
@@ -21,6 +21,12 @@ const HistoryGraph = () => {
     updatingSingleTask,
     deletingSingleTask
   } = useTask();
+
+  useEffect(() => {
+    getHistoryForGraph();
+    getStatsForGraph();
+  }, [deleteSingleTask,updateSingleTask])
+  
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);

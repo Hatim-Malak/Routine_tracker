@@ -42,8 +42,6 @@ public class TaskCompletionService {
             .orElseThrow(()->new RuntimeException("Routine not found or unauthorized"));
         
         LocalDate today = LocalDate.now();
-        LocalTime now = LocalTime.now();
-
         Optional<TaskCompletion> existingCompletion = taskCompletionRepo.findByTaskAndCompletionDate(routine, today);
 
         if(existingCompletion.isPresent()){
@@ -155,7 +153,7 @@ public class TaskCompletionService {
         return responseList;
     }
 
-    private void invalidateUserCache(Integer userId) {
+    public void invalidateUserCache(Integer userId) {
         try {
             cacheService.delete(DASHBOARD_CACHE_PREFIX + userId);
             cacheService.delete(HISTORY_CACHE_PREFIX + userId);

@@ -21,4 +21,5 @@ public interface TaskCompletionRepo extends JpaRepository<TaskCompletion,Integer
         @Param("userId") Integer userId, 
         @Param("startDate") LocalDate startDate
     );
+    void deleteByTask(Task task);
 }

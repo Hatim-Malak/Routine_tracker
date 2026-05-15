@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTask } from "../Store/UseTaskStore";
 import { Plus, Trash2, ArrowLeft, Loader2, Save } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
@@ -8,7 +8,7 @@ const CreateRoutine = () => {
   const [tasks, setTasks] = useState([{ title: "", startTime: "", endTime: "" }]);
   const { createTask, getHistoryForGraph, getStatsForGraph, creatingTask } = useTask();
   const navigate = useNavigate();
-
+  
   const handleAddRow = () => {
     setTasks([...tasks, { title: "", startTime: "", endTime: "" }]);
   };

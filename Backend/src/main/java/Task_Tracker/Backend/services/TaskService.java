@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import Task_Tracker.Backend.DTO.TaskRequest;
 import Task_Tracker.Backend.models.Task;
 import Task_Tracker.Backend.models.User;
+import Task_Tracker.Backend.repository.TaskCompletionRepo;
 import Task_Tracker.Backend.repository.TaskRepo;
 import jakarta.transaction.Transactional;
 
@@ -17,6 +18,10 @@ public class TaskService {
 
     @Autowired
     private TaskRepo taskRepo;
+
+    @Autowired
+    private TaskCompletionService taskCompletionService;
+
 
     public List<Task> createTask(List<TaskRequest> taskRequest,User user) throws Exception{
         List<Task> newTask = new ArrayList<>();
@@ -29,20 +34,23 @@ public class TaskService {
 
             newTask.add(task);
         }
-
+        taskCompletionService.invalidateUserCache(user.getId());
         return taskRepo.saveAll(newTask);
     }
 
+    @Transactional
     public String deleteSingleTask(Integer taskId,User user) throws Exception{
         Task task = taskRepo.findByIdAndUser(taskId, user)
                 .orElseThrow(() -> new RuntimeException("Task not found or unauthorized"));
-        taskRepo.delete(task);
+                taskRepo.delete(task);
+                taskCompletionService.invalidateUserCache(user.getId());
         return "task deleted successfully";
     }
 
     @Transactional
     public String clearEntireRoutine(User user) throws Exception{
         taskRepo.deleteAllByUser(user);
+        taskCompletionService.invalidateUserCache(user.getId());
         return "All task deleted successfully";
     }
 
@@ -59,7 +67,9 @@ public class TaskService {
         task.setTitle(request.getTitle());
         task.setStartTime(request.getStartTime());
         task.setEndTime(request.getEndTime());
-        
-        return taskRepo.save(task);
+        Task savedTask = taskRepo.save(task);
+
+        taskCompletionService.invalidateUserCache(user.getId());
+        return savedTask;
     }
 }
