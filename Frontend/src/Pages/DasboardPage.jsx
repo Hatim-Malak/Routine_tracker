@@ -1,18 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useTask } from "../Store/UseTaskStore";
 import Navbar from "../Components/Navbar";
 import HistoryGraph from "../Components/HistoryGraph";
 import { ConsistencyChart, BreakdownChart } from "../Components/StatGraph";
-import { CalendarDays, BarChart3, PieChart } from "lucide-react";
+import { CalendarDays, BarChart3, PieChart, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const DashboardPage = () => {
   const { getHistoryForGraph, getStatsForGraph } = useTask();
+  const history = useTask((s) => s.history);
+  const navigate = useNavigate();
+  const [showCreatePrompt, setShowCreatePrompt] = useState(false);
 
   useEffect(() => {
-    getHistoryForGraph();
-    getStatsForGraph();
+    let mounted = true;
+    const init = async () => {
+      try {
+        await getHistoryForGraph();
+        await getStatsForGraph();
+      } catch (e) {
+        // ignore — user will see dashboard fallback
+      }
+    };
+
+    init();
+    return () => { mounted = false };
   }, [getHistoryForGraph, getStatsForGraph]);
+
+  // react to live history changes (e.g., deletions) so the prompt shows immediately
+  useEffect(() => {
+    setShowCreatePrompt(!history || history.length === 0);
+  }, [history]);
 
   return (
     <div className="min-h-screen relative bg-[#FAFAFA] overflow-hidden">
@@ -43,6 +62,36 @@ const DashboardPage = () => {
               Here's an overview of your routines and progress.
             </p>
           </motion.div>
+
+          {/* ── Prompt: Create routine when none exists ── */}
+          {showCreatePrompt && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="mb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            >
+              <div className="rounded-2xl p-4 flex items-center justify-between gap-4 bg-gradient-to-r from-[#FFF7E6] to-[#FFFFFF] border border-[#F5E0B7] shadow-lg">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFF3D6] to-[#FFE9B8] shadow-inner">
+                    <Sparkles className="w-6 h-6 text-[#C47A00]" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-[#3b2d00]">You're almost ready — create your first routine</p>
+                    <p className="text-sm text-[#6b582a] mt-1">Add tasks now to start building streaks and visual reports.</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate('/create-routine')}
+                    className="bg-[#333333] text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-95 shadow-md"
+                  >
+                    Create Routine
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* ── Master flex column ── */}
           <div className="flex flex-col gap-8">

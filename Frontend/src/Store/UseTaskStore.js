@@ -57,11 +57,20 @@ export const useTask = create((set,get)=>({
 
     deleteSingleTask:async(taskId)=>{
         set({deletingSingleTask:true})
+        const prevTasks = get().tasks
+        const prevHistory = get().history
+        set((state) => ({
+            tasks: state.tasks.filter(t => (t?.taskId ?? t?.id ?? t) !== taskId),
+            history: state.history.filter(t => (t?.taskId ?? t?.id ?? t) !== taskId),
+        }))
+
         try {
-            const res = await axiosInstance.delete(`/task/delete/${taskId}`)
+            await axiosInstance.delete(`/task/delete/${taskId}`)
             toast.success("Routine task deleted")
         } catch (error) {
-            toast.error(error.response.data.message) 
+            // rollback to previous state if deletion failed
+            set({ tasks: prevTasks, history: prevHistory })
+            toast.error(error.response?.data?.message || "Failed to delete routine task")
         }
         finally{
             set({deletingSingleTask:false})
