@@ -184,84 +184,96 @@ const Navbar = () => {
               animate={{ opacity: 1 }} 
               exit={{ opacity: 0 }} 
               onClick={() => setIsUpdateModalOpen(false)}
-              className="absolute inset-0 bg-[#333333]/40 backdrop-blur-sm"
+              className="absolute inset-0 bg-[#111827]/20 backdrop-blur-sm"
             />
             <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+              initial={{ scale: 0.96, opacity: 0, y: 18 }} 
               animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-              className="relative bg-[#FFFFFF] rounded-2xl shadow-xl border border-[#E1F4F3] w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+              exit={{ scale: 0.96, opacity: 0, y: 18 }} 
+              className="relative w-full max-w-4xl max-h-[calc(100vh-3rem)] overflow-hidden rounded-[28px] bg-[#FFFFFF] border border-[#E1F4F3] shadow-[0_28px_100px_rgba(51,51,51,0.14)]"
             >
-              <div className="sticky top-0 bg-[#FFFFFF] border-b border-[#E1F4F3] px-6 py-4 flex items-center justify-between z-10">
-                <div>
-                  <h2 className="text-xl font-bold text-[#333333]">Update Routine</h2>
-                  <p className="text-xs text-[#706C61] mt-0.5">Edit or Reset your daily tasks.</p>
+              <div className="sticky top-0 z-10 border-b border-[#E1F4F3] bg-[#FFFFFF] px-6 py-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-[0.32em] text-[#706C61]">Task builder</p>
+                    <h2 className="text-2xl font-semibold text-[#111827]">Update Routine</h2>
+                    <p className="max-w-2xl text-sm text-[#475158]">Match the look and feel of your routine builder while keeping the form compact and easy to scan.</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsUpdateModalOpen(false)}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#E1F4F3] bg-[#F7FCFB] text-[#706C61] transition-colors hover:bg-[#E1F4F3]"
+                    aria-label="Close update modal"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
-                <button 
-                  onClick={() => setIsUpdateModalOpen(false)}
-                  className="p-2 rounded-full hover:bg-[#E1F4F3] text-[#706C61] transition-colors border-none bg-transparent cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
-              <div className="p-6">
-                <form onSubmit={handleUpdateRoutine} className="flex flex-col gap-6">
-                  <div className="flex flex-col gap-4">
-                    {tasks.map((task, idx) => (
-                      <div key={idx} className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-4 border border-[#E1F4F3] rounded-xl bg-[#FAFAFA]">
-                        <div className="flex-1 w-full">
-                          <label className="block text-xs font-medium text-[#706C61] mb-1">Task Title</label>
+              <div className="max-h-[calc(100vh-14rem)] overflow-y-auto p-6 space-y-6">
+                <div className="rounded-[24px] border border-[#E1F4F3] bg-[#F7FCFB] p-5 shadow-sm">
+                  <p className="text-sm font-semibold text-[#333333]">Quick guide</p>
+                  <p className="mt-2 text-sm leading-6 text-[#706C61]">Keep each task compact and consistent. If inputs stretch too wide, the modal stays contained and responsive.</p>
+                </div>
+
+                <form onSubmit={handleUpdateRoutine} className="space-y-5">
+                  {tasks.map((task, idx) => (
+                    <div key={idx} className="group relative overflow-hidden rounded-[24px] border border-[#E1F4F3] bg-[#FAFAFA] p-5 shadow-sm transition hover:shadow-md">
+                      <div className="absolute -top-3 -left-3 flex h-7 w-7 items-center justify-center rounded-full bg-[#333333] text-[10px] font-bold text-white shadow-sm">{idx + 1}</div>
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <label className="block text-[11px] font-bold uppercase tracking-wider text-[#706C61] mb-2">Task title</label>
                           <input 
                             type="text" 
                             required
                             placeholder="e.g., Morning Workout"
                             value={task.title}
                             onChange={(e) => handleChange(idx, "title", e.target.value)}
-                            className="w-full px-3 py-2 border border-[#E1F4F3] rounded-lg focus:outline-none focus:border-[#333333] transition-colors text-[#333333] text-sm bg-[#FFFFFF]"
+                            className="w-full rounded-2xl border-2 border-[#E1F4F3] bg-white px-4 py-3 text-sm text-[#333333] outline-none transition focus:border-[#333333] focus:bg-white"
                           />
                         </div>
-                        <div className="w-full sm:w-auto flex items-center gap-3">
+
+                        <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-[480px]">
                           <div>
-                            <label className="block text-xs font-medium text-[#706C61] mb-1">Start Time</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#706C61] mb-2">Start time</label>
                             <input 
                               type="time" 
                               required
                               value={task.startTime}
                               onChange={(e) => handleChange(idx, "startTime", e.target.value)}
-                              className="w-full px-3 py-2 border border-[#E1F4F3] rounded-lg focus:outline-none focus:border-[#333333] transition-colors text-[#333333] text-sm bg-[#FFFFFF]"
+                              className="w-full rounded-2xl border-2 border-[#E1F4F3] bg-white px-4 py-3 text-sm text-[#333333] outline-none transition focus:border-[#333333] focus:bg-white"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-[#706C61] mb-1">End Time</label>
+                            <label className="block text-[11px] font-bold uppercase tracking-wider text-[#706C61] mb-2">End time</label>
                             <input 
                               type="time" 
                               required
                               value={task.endTime}
                               onChange={(e) => handleChange(idx, "endTime", e.target.value)}
-                              className="w-full px-3 py-2 border border-[#E1F4F3] rounded-lg focus:outline-none focus:border-[#333333] transition-colors text-[#333333] text-sm bg-[#FFFFFF]"
+                              className="w-full rounded-2xl border-2 border-[#E1F4F3] bg-white px-4 py-3 text-sm text-[#333333] outline-none transition focus:border-[#333333] focus:bg-white"
                             />
                           </div>
-                          {tasks.length > 1 && (
-                            <button 
-                              type="button" 
-                              onClick={() => handleRemoveRow(idx)}
-                              className="mt-5 p-2 bg-transparent border-none rounded-lg text-[#706C61] hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
-                              title="Remove Task"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          )}
                         </div>
-                      </div>
-                    ))}
-                  </div>
 
-                  <div className="flex justify-between items-center mt-2 pt-4 border-t border-[#E1F4F3]">
+                        {tasks.length > 1 && (
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveRow(idx)}
+                            className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#E1F4F3] bg-white text-[#706C61] transition hover:bg-[#F5F7F9] hover:text-red-500"
+                            title="Remove task"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button 
                       type="button" 
                       onClick={handleAddRow}
-                      className="flex items-center gap-2 text-sm font-medium text-[#333333] bg-[#E1F4F3] hover:opacity-80 px-4 py-2 rounded-lg transition-all cursor-pointer border-none"
+                      className="flex items-center justify-center gap-2 rounded-full border border-[#E1F4F3] bg-[#F7FCFB] px-5 py-3 text-sm font-semibold text-[#333333] transition hover:bg-[#E1F4F3]"
                     >
                       <Plus className="w-4 h-4" />
                       Add Another Task
@@ -270,10 +282,10 @@ const Navbar = () => {
                     <button 
                       type="submit" 
                       disabled={updatingAllTask}
-                      className="flex items-center gap-2 text-sm font-medium text-[#FFFFFF] bg-[#333333] hover:bg-[#1a1a1a] px-6 py-2 rounded-lg transition-all cursor-pointer border-none disabled:opacity-70 disabled:cursor-not-allowed"
+                      className="flex items-center justify-center gap-2 rounded-full bg-[#333333] px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-[#323643]/15 transition hover:bg-[#1a1a1a] disabled:cursor-not-allowed disabled:opacity-70"
                     >
                       {updatingAllTask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      Update Routine
+                      Save Routine
                     </button>
                   </div>
                 </form>

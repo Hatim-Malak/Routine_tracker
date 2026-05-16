@@ -36,7 +36,7 @@ public class TaskCompletionService {
 
     private static final org.slf4j.Logger log =  LoggerFactory.getLogger(TaskCompletionService.class);
 
-    private static final String DASHBOARD_CACHE_PREFIX = "sashboardStats:userId:";
+    private static final String DASHBOARD_CACHE_PREFIX = "dashboardStats:userId:";
     private static final String HISTORY_CACHE_PREFIX = "routinerId:userId:";
 
     public String toggleRoutineForToday(Integer routineId,User user) throws Exception{
@@ -75,7 +75,8 @@ public class TaskCompletionService {
             log.warn("Redis error on fetching Dashboard stats, falling back to db", e);
         }
 
-        LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
+        LocalDate today = LocalDate.now();
+        LocalDate thirtyDaysAgo = today.minusDays(30);
         List<TaskCompletion> recentCompletions = taskCompletionRepo.findAllUserCompletionsFromDate(user.getId(), thirtyDaysAgo);
 
         // 1. Consistency Data
@@ -98,28 +99,40 @@ public class TaskCompletionService {
             .distinct() 
             .collect(Collectors.toList());
 
-        // --- NEW CHART CALCULATIONS ---
+        // --- FIXED CHART CALCULATIONS ---
 
-        // 4. Weekly Activity (Calculated dynamically from last 7 days)
-        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
-        List<DashBoardStatsResponse.WeeklyData> weeklyData = recentCompletions.stream()
+        // 4. Weekly Activity (Pre-filled to ensure empty days render nicely with a 0 value)
+        LocalDate sevenDaysAgo = today.minusDays(7);
+        Map<String, Integer> weeklyMap = new LinkedHashMap<>();
+        weeklyMap.put("Mon", 0);
+        weeklyMap.put("Tue", 0);
+        weeklyMap.put("Wed", 0);
+        weeklyMap.put("Thu", 0);
+        weeklyMap.put("Fri", 0);
+        weeklyMap.put("Sat", 0);
+        weeklyMap.put("Sun", 0);
+
+        recentCompletions.stream()
             .filter(tc -> !tc.getCompletionDate().isBefore(sevenDaysAgo))
-            .collect(Collectors.groupingBy(
-                // Extracts the short day name (e.g., "Mon", "Tue")
-                tc -> tc.getCompletionDate().getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH),
-                Collectors.counting()
-            ))
-            .entrySet().stream()
-            .map(entry -> new DashBoardStatsResponse.WeeklyData(entry.getKey(), entry.getValue().intValue()))
+            .forEach(tc -> {
+                String dayName = tc.getCompletionDate().getDayOfWeek()
+                    .getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH);
+                if (weeklyMap.containsKey(dayName)) {
+                    weeklyMap.put(dayName, weeklyMap.get(dayName) + 1);
+                }
+            });
+
+        List<DashBoardStatsResponse.WeeklyData> weeklyData = weeklyMap.entrySet().stream()
+            .map(entry -> new DashBoardStatsResponse.WeeklyData(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
 
-        // 5. Goal Progress (Calculated dynamically against a target of 15 tasks/week)
+        // 5. Goal Progress (Calculated against a target of 15 completions/week)
         long completionsThisWeek = recentCompletions.stream()
             .filter(tc -> !tc.getCompletionDate().isBefore(sevenDaysAgo))
             .count();
         
-        int goalTarget = 15; // Set your default weekly target here
-        int progressPercentage = (int) Math.min((completionsThisWeek * 100) / goalTarget, 100); // Caps at 100%
+        int goalTarget = 15; 
+        int progressPercentage = (int) Math.min((completionsThisWeek * 100) / goalTarget, 100); 
         
         List<DashBoardStatsResponse.GoalProgressData> goalData = List.of(
             new DashBoardStatsResponse.GoalProgressData("Weekly Goal", progressPercentage)
@@ -128,13 +141,15 @@ public class TaskCompletionService {
         // --- CREATE RESPONSE ---
         DashBoardStatsResponse response = new DashBoardStatsResponse();
 
-        // Set the original 3 fields
         response.setConsistencyGraph(consistencyData);
         response.setBreakdownGraph(breakdownData);
         response.setActiveDatesForHeatmap(activeDates);
+        response.setWeeklyGraph(weeklyData);
+        response.setGoalProgressGraph(goalData);
 
+        // 6. Balance Data (Using user categories mapped on Task creations)
         List<DashBoardStatsResponse.BalanceData> balanceData = recentCompletions.stream()
-            .filter(tc -> tc.getTask().getCategory() != null) // Make sure the task has a category
+            .filter(tc -> tc.getTask().getCategory() != null)
             .collect(Collectors.groupingBy(
                 tc -> tc.getTask().getCategory(), 
                 Collectors.counting()
@@ -145,7 +160,7 @@ public class TaskCompletionService {
 
         response.setBalanceGraph(balanceData);
 
-        
+        // 7. Time of Day (FIXED: Uses actual interaction timestamp instead of target time configuration)
         Map<String, Integer> timeBlocks = new LinkedHashMap<>();
         timeBlocks.put("Morning (6 AM-12 PM)", 0);
         timeBlocks.put("Afternoon (12 PM-6 PM)", 0);
@@ -153,24 +168,16 @@ public class TaskCompletionService {
         timeBlocks.put("Night (12 AM-6 AM)", 0);
 
         for (TaskCompletion tc : recentCompletions) {
-            Object startTimeObj = tc.getTask().getStartTime(); 
+            LocalTime completionTime = tc.getCompletedAt(); 
             
-            if (startTimeObj != null) {
-                int hour = 0;
-                
-                if (startTimeObj instanceof java.time.LocalTime) {
-                    hour = ((java.time.LocalTime) startTimeObj).getHour();
-                } else if (startTimeObj instanceof String) {
-                    try {
-                        hour = Integer.parseInt(((String) startTimeObj).split(":")[0]);
-                    } catch (Exception e) { continue;  }
-                }
+            if (completionTime != null) {
+                int hour = completionTime.getHour();
 
                 if (hour >= 6 && hour < 12) {
                     timeBlocks.put("Morning (6 AM-12 PM)", timeBlocks.get("Morning (6 AM-12 PM)") + 1);
                 } else if (hour >= 12 && hour < 18) {
                     timeBlocks.put("Afternoon (12 PM-6 PM)", timeBlocks.get("Afternoon (12 PM-6 PM)") + 1);
-                } else if (hour >= 18 && hour <= 23) {
+                } else if (hour >= 18 && hour < 24) {
                     timeBlocks.put("Evening (6 PM-12 AM)", timeBlocks.get("Evening (6 PM-12 AM)") + 1);
                 } else {
                     timeBlocks.put("Night (12 AM-6 AM)", timeBlocks.get("Night (12 AM-6 AM)") + 1);
@@ -183,8 +190,7 @@ public class TaskCompletionService {
             .collect(Collectors.toList());
 
         response.setTimeOfDayGraph(timeOfDayData);      
-        response.setWeeklyGraph(weeklyData);
-        response.setGoalProgressGraph(goalData);
+
         try {
             cacheService.set(cacheKey, response, Duration.ofHours(2));
         } catch (Exception e) {
