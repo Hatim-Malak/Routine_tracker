@@ -29,6 +29,7 @@ public class TaskService {
             task.setTitle(oldTask.getTitle());
             task.setStartTime(oldTask.getStartTime());
             task.setEndTime(oldTask.getEndTime());
+            task.setCategory(oldTask.getCategory());
             task.setUser(user);
 
             newTask.add(task);
@@ -66,6 +67,7 @@ public class TaskService {
         task.setTitle(request.getTitle());
         task.setStartTime(request.getStartTime());
         task.setEndTime(request.getEndTime());
+        task.setCategory(request.getCategory());
         Task savedTask = taskRepo.save(task);
 
         taskCompletionService.invalidateUserCache(user.getId());

@@ -13,4 +13,5 @@ public class TaskRequest {
     private String title;
     private LocalTime startTime;
     private LocalTime endTime;
+    private String category;
 }

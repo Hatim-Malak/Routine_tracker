@@ -60,6 +60,10 @@ public class DashboardLayoutService {
         switch (type) {
             case "CONSISTENCY":
             case "BREAKDOWN":
+            case "WEEKLY_ACTIVITY":
+            case "ROUTINE_BALANCE":
+            case "TIME_OF_DAY":
+            case "GOAL_PROGRESS":
             case "EMPTY":
                 return type;
             default:

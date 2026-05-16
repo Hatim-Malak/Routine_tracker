@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,6 +27,8 @@ public class Task {
     private String title;
     private LocalTime startTime;
     private LocalTime endTime;
+    @Column(name = "category")
+    private String category;
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;

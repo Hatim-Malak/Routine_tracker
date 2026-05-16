@@ -5,7 +5,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,44 +68,128 @@ public class TaskCompletionService {
 
         try {
             DashBoardStatsResponse cacheStats = cacheService.get(cacheKey, DashBoardStatsResponse.class);
-            if(cacheStats != null){
+            if (cacheStats != null) {
                 return cacheStats;
             }
         } catch (Exception e) {
-            log.warn("Re3dis error on fetching Dashboard ststs, falling back to db",e);
+            log.warn("Redis error on fetching Dashboard stats, falling back to db", e);
         }
 
         LocalDate thirtyDaysAgo = LocalDate.now().minusDays(30);
         List<TaskCompletion> recentCompletions = taskCompletionRepo.findAllUserCompletionsFromDate(user.getId(), thirtyDaysAgo);
 
-
+        // 1. Consistency Data
         List<DashBoardStatsResponse.DailyActivity> consistencyData = recentCompletions.stream()
             .collect(Collectors.groupingBy(tc -> tc.getCompletionDate().toString(), Collectors.counting()))
             .entrySet().stream()
             .map(entry -> new DashBoardStatsResponse.DailyActivity(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
 
-
+        // 2. Breakdown Data
         List<DashBoardStatsResponse.RoutinePopularity> breakdownData = recentCompletions.stream()
-
             .collect(Collectors.groupingBy(tc -> tc.getTask().getTitle(), Collectors.counting())) 
             .entrySet().stream()
             .map(entry -> new DashBoardStatsResponse.RoutinePopularity(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
 
-
+        // 3. Active Dates
         List<String> activeDates = recentCompletions.stream()
             .map(tc -> tc.getCompletionDate().toString())
             .distinct() 
             .collect(Collectors.toList());
-        
-        DashBoardStatsResponse response = new DashBoardStatsResponse(consistencyData, breakdownData, activeDates);
 
-            try {
-                cacheService.set(cacheKey, response, Duration.ofHours(2));
-            } catch (Exception e) {
-                log.error("failed to cache dashboard stats",e);
+        // --- NEW CHART CALCULATIONS ---
+
+        // 4. Weekly Activity (Calculated dynamically from last 7 days)
+        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
+        List<DashBoardStatsResponse.WeeklyData> weeklyData = recentCompletions.stream()
+            .filter(tc -> !tc.getCompletionDate().isBefore(sevenDaysAgo))
+            .collect(Collectors.groupingBy(
+                // Extracts the short day name (e.g., "Mon", "Tue")
+                tc -> tc.getCompletionDate().getDayOfWeek().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH),
+                Collectors.counting()
+            ))
+            .entrySet().stream()
+            .map(entry -> new DashBoardStatsResponse.WeeklyData(entry.getKey(), entry.getValue().intValue()))
+            .collect(Collectors.toList());
+
+        // 5. Goal Progress (Calculated dynamically against a target of 15 tasks/week)
+        long completionsThisWeek = recentCompletions.stream()
+            .filter(tc -> !tc.getCompletionDate().isBefore(sevenDaysAgo))
+            .count();
+        
+        int goalTarget = 15; // Set your default weekly target here
+        int progressPercentage = (int) Math.min((completionsThisWeek * 100) / goalTarget, 100); // Caps at 100%
+        
+        List<DashBoardStatsResponse.GoalProgressData> goalData = List.of(
+            new DashBoardStatsResponse.GoalProgressData("Weekly Goal", progressPercentage)
+        );
+
+        // --- CREATE RESPONSE ---
+        DashBoardStatsResponse response = new DashBoardStatsResponse();
+
+        // Set the original 3 fields
+        response.setConsistencyGraph(consistencyData);
+        response.setBreakdownGraph(breakdownData);
+        response.setActiveDatesForHeatmap(activeDates);
+
+        List<DashBoardStatsResponse.BalanceData> balanceData = recentCompletions.stream()
+            .filter(tc -> tc.getTask().getCategory() != null) // Make sure the task has a category
+            .collect(Collectors.groupingBy(
+                tc -> tc.getTask().getCategory(), 
+                Collectors.counting()
+            ))
+            .entrySet().stream()
+            .map(entry -> new DashBoardStatsResponse.BalanceData(entry.getKey(), entry.getValue().intValue()))
+            .collect(Collectors.toList());
+
+        response.setBalanceGraph(balanceData);
+
+        
+        Map<String, Integer> timeBlocks = new LinkedHashMap<>();
+        timeBlocks.put("Morning (6 AM-12 PM)", 0);
+        timeBlocks.put("Afternoon (12 PM-6 PM)", 0);
+        timeBlocks.put("Evening (6 PM-12 AM)", 0);
+        timeBlocks.put("Night (12 AM-6 AM)", 0);
+
+        for (TaskCompletion tc : recentCompletions) {
+            Object startTimeObj = tc.getTask().getStartTime(); 
+            
+            if (startTimeObj != null) {
+                int hour = 0;
+                
+                if (startTimeObj instanceof java.time.LocalTime) {
+                    hour = ((java.time.LocalTime) startTimeObj).getHour();
+                } else if (startTimeObj instanceof String) {
+                    try {
+                        hour = Integer.parseInt(((String) startTimeObj).split(":")[0]);
+                    } catch (Exception e) { continue;  }
+                }
+
+                if (hour >= 6 && hour < 12) {
+                    timeBlocks.put("Morning (6 AM-12 PM)", timeBlocks.get("Morning (6 AM-12 PM)") + 1);
+                } else if (hour >= 12 && hour < 18) {
+                    timeBlocks.put("Afternoon (12 PM-6 PM)", timeBlocks.get("Afternoon (12 PM-6 PM)") + 1);
+                } else if (hour >= 18 && hour <= 23) {
+                    timeBlocks.put("Evening (6 PM-12 AM)", timeBlocks.get("Evening (6 PM-12 AM)") + 1);
+                } else {
+                    timeBlocks.put("Night (12 AM-6 AM)", timeBlocks.get("Night (12 AM-6 AM)") + 1);
+                }
             }
+        }
+
+        List<DashBoardStatsResponse.TimeOfDayData> timeOfDayData = timeBlocks.entrySet().stream()
+            .map(entry -> new DashBoardStatsResponse.TimeOfDayData(entry.getKey(), entry.getValue()))
+            .collect(Collectors.toList());
+
+        response.setTimeOfDayGraph(timeOfDayData);      
+        response.setWeeklyGraph(weeklyData);
+        response.setGoalProgressGraph(goalData);
+        try {
+            cacheService.set(cacheKey, response, Duration.ofHours(2));
+        } catch (Exception e) {
+            log.error("Failed to cache dashboard stats", e);
+        }
 
         return response;
     }
