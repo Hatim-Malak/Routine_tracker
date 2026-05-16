@@ -14,7 +14,12 @@ export const useAuth = create((set, get) => ({
             set({ authUser: res.data });
         } catch (error) {
             console.log("Error in checkAuth", error);
-            set({ authUser: null });
+            if (error.response && error.response.status === 401) {
+                set({ user: null, isAuthenticated: false });
+                localStorage.removeItem("jwt");
+            } else {
+                console.error("Auth check failed due to server/network error:", error);
+            }
         } finally {
             set({ isCheckingAuth: false });
         }

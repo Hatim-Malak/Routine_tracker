@@ -13,18 +13,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import Task_Tracker.Backend.DTO.DashboardLayoutRequest;
 import Task_Tracker.Backend.DTO.LoginRequest;
 import Task_Tracker.Backend.DTO.UserProfileResponse;
+import Task_Tracker.Backend.models.DashboardLayout;
 import Task_Tracker.Backend.models.User;
+import Task_Tracker.Backend.services.DashboardLayoutService;
 import Task_Tracker.Backend.services.UserPrincipal;
 import Task_Tracker.Backend.services.UserService;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @RestController 
 @RequestMapping("/api/auth")
 public class UserController {
     @Autowired
     private UserService service;
+
+    @Autowired
+    private DashboardLayoutService dashboardLayoutService;
 
     private BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(12);
 
@@ -90,6 +98,34 @@ public class UserController {
             return new ResponseEntity<>(userProfileResponse,HttpStatus.OK);
         } catch (Exception e) {
             System.out.println("Internal serber error"+e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/dashboard/layout")
+    public ResponseEntity<DashboardLayout> getDashboardLayout(Authentication authentication){
+        try {
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            User user = userPrincipal.getUser();
+            DashboardLayout layout = dashboardLayoutService.getLayoutByUser(user);
+            return new ResponseEntity<>(layout, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Internal server error: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/dashboard/layout")
+    public ResponseEntity<DashboardLayout> updateDashboardLayout(
+            Authentication authentication,
+            @RequestBody DashboardLayoutRequest request){
+        try {
+            UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
+            User user = userPrincipal.getUser();
+            DashboardLayout layout = dashboardLayoutService.updateLayout(user, request);
+            return new ResponseEntity<>(layout, HttpStatus.OK);
+        } catch (Exception e) {
+            System.out.println("Internal server error: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

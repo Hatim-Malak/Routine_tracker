@@ -8,24 +8,17 @@ import toast from "react-hot-toast";
 const SHORT_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const buildDayLabels = (count) => Array.from({ length: count }, (_, i) => SHORT_DAYS[i % 7]);
 
-const HistoryGraph = () => {
-  const { 
-    history, 
-    gettingHistory, 
-    deleteSingleTask, 
-    updateSingleTask, 
-    toggleRoutineForToday, 
-    getHistoryForGraph, 
-    getStatsForGraph, 
-    togglingRoutineForToday,
-    updatingSingleTask,
-    deletingSingleTask
-  } = useTask();
-
-  useEffect(() => {
-    getHistoryForGraph();
-    getStatsForGraph();
-  }, [deleteSingleTask,updateSingleTask])
+const HistoryGraph = ({ isEmbedded = false }) => {
+  const history = useTask((s) => s.history);
+  const gettingHistory = useTask((s) => s.gettingHistory);
+  const deleteSingleTask = useTask((s) => s.deleteSingleTask);
+  const updateSingleTask = useTask((s) => s.updateSingleTask);
+  const toggleRoutineForToday = useTask((s) => s.toggleRoutineForToday);
+  const getHistoryForGraph = useTask((s) => s.getHistoryForGraph);
+  const getStatsForGraph = useTask((s) => s.getStatsForGraph);
+  const togglingRoutineForToday = useTask((s) => s.togglingRoutineForToday);
+  const updatingSingleTask = useTask((s) => s.updatingSingleTask);
+  const deletingSingleTask = useTask((s) => s.deletingSingleTask);
   
 
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -127,7 +120,7 @@ const HistoryGraph = () => {
   const LABEL_COL_W = 240; // widened for action buttons
 
   return (
-    <div className="overflow-x-auto relative pb-2 min-h-[250px]">
+    <div className={`overflow-x-auto relative pb-2 ${isEmbedded ? "max-h-96 overflow-y-auto" : "min-h-62.5"}`}>
       <table className="border-separate table-auto" style={{ borderSpacing: `${GAP_PX}px` }}>
         {/* ── Header: Day labels ── */}
         <thead>
@@ -205,7 +198,7 @@ const HistoryGraph = () => {
                   const interactive = isInteractive(day.date, task.startTime, task.endTime);
                   
                   return (
-                    <td key={colIdx} className="p-0 align-middle text-center w-[24px]">
+                    <td key={colIdx} className="p-0 align-middle text-center w-6">
                       {interactive ? (
                         <motion.button
                           onClick={() => handleToggle(taskId)}
@@ -216,7 +209,7 @@ const HistoryGraph = () => {
                           whileHover={{ scale: 1.15 }}
                           whileTap={{ scale: 0.9 }}
                           title={`Toggle ${name} (Today's task!)`}
-                          className={`w-[24px] h-[24px] p-0 border-none rounded-[4px] cursor-pointer shadow-sm transition-all duration-150 relative disabled:cursor-wait ${
+                          className={`w-6 h-6 p-0 border-none rounded-sm cursor-pointer shadow-sm transition-all duration-150 relative disabled:cursor-wait ${
                             day.completed ? "bg-[#333333] hover:opacity-85" : "bg-white border-2 border-[#333333] hover:bg-[#E1F4F3]"
                           }`}
                         >
@@ -236,7 +229,7 @@ const HistoryGraph = () => {
                               ? `${day.date}: ${day.completed ? "Completed ✓" : "Missed"}` 
                               : `Day ${colIdx + 1}: ${day.completed ? "Completed ✓" : "Missed"}`
                           }
-                          className={`mx-auto rounded-[4px] cursor-not-allowed transition-colors duration-150 ${
+                          className={`mx-auto rounded-sm cursor-not-allowed transition-colors duration-150 ${
                             day.completed ? "bg-[#333333]/80" : "bg-[#E1F4F3]"
                           }`}
                           style={{ width: SQUARE_PX, height: SQUARE_PX }}
@@ -270,7 +263,7 @@ const HistoryGraph = () => {
       {/* ── Edit Task Modal ── */}
       <AnimatePresence>
         {editModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center p-4">
             <motion.div 
               initial={{ opacity: 0 }} 
               animate={{ opacity: 1 }} 

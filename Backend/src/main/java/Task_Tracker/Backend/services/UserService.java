@@ -34,8 +34,14 @@ public class UserService {
     @Autowired
     private CacheService cacheService;
 
+    @Autowired
+    private DashboardLayoutService dashboardLayoutService;
+
     public User register(User user) throws Exception{
-        return repo.save(user);
+        User savedUser = repo.save(user);
+        // Initialize default dashboard layout for new user
+        dashboardLayoutService.getOrCreateDefaultLayout(savedUser);
+        return savedUser;
     }
 
     public String verify(String email,String password) throws Exception{

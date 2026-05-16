@@ -2,21 +2,23 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useTask } from "../Store/UseTaskStore";
 import Navbar from "../Components/Navbar";
+import DraggableDashboard from "../Components/DraggableDashboard";
 import HistoryGraph from "../Components/HistoryGraph";
-import { ConsistencyChart, BreakdownChart } from "../Components/StatGraph";
-import { CalendarDays, BarChart3, PieChart, Sparkles } from "lucide-react";
+import { CalendarDays, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const DashboardPage = () => {
-  const { getHistoryForGraph, getStatsForGraph } = useTask();
+  const getHistoryForGraph = useTask((s) => s.getHistoryForGraph);
+  const getStatsForGraph = useTask((s) => s.getStatsForGraph);
+  const getDashboardLayout = useTask((s) => s.getDashboardLayout);
   const history = useTask((s) => s.history);
   const navigate = useNavigate();
   const [showCreatePrompt, setShowCreatePrompt] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
     const init = async () => {
       try {
+        await getDashboardLayout();
         await getHistoryForGraph();
         await getStatsForGraph();
       } catch (e) {
@@ -25,8 +27,7 @@ const DashboardPage = () => {
     };
 
     init();
-    return () => { mounted = false };
-  }, [getHistoryForGraph, getStatsForGraph]);
+  }, [getHistoryForGraph, getStatsForGraph, getDashboardLayout]);
 
   // react to live history changes (e.g., deletions) so the prompt shows immediately
   useEffect(() => {
@@ -55,7 +56,7 @@ const DashboardPage = () => {
             transition={{ duration: 0.4 }}
             className="mb-10"
           >
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[#333333] to-[#706C61]">
+            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-linear-to-r from-[#333333] to-[#706C61]">
               Dashboard
             </h1>
             <p className="text-sm font-medium text-[#706C61] mt-2">
@@ -71,9 +72,9 @@ const DashboardPage = () => {
               exit={{ opacity: 0, y: -8 }}
               className="mb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
             >
-              <div className="rounded-2xl p-4 flex items-center justify-between gap-4 bg-gradient-to-r from-[#FFF7E6] to-[#FFFFFF] border border-[#F5E0B7] shadow-lg">
+              <div className="rounded-2xl p-4 flex items-center justify-between gap-4 bg-linear-to-r from-[#FFF7E6] to-[#FFFFFF] border border-[#F5E0B7] shadow-lg">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFF3D6] to-[#FFE9B8] shadow-inner">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-[#FFF3D6] to-[#FFE9B8] shadow-inner">
                     <Sparkles className="w-6 h-6 text-[#C47A00]" />
                   </div>
                   <div>
@@ -95,47 +96,22 @@ const DashboardPage = () => {
 
           {/* ── Master flex column ── */}
           <div className="flex flex-col gap-8">
-            {/* ── Top Row: Analytics (60 / 40 split) ── */}
-            <div className="flex flex-col lg:flex-row gap-6">
-              {/* Analytics chart — 60% */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="lg:w-[60%] bg-white/80 backdrop-blur-xl border border-[#E1F4F3] shadow-xl shadow-[#E1F4F3]/50 rounded-3xl p-6 lg:p-8"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#E1F4F3] flex items-center justify-center shadow-sm">
-                    <BarChart3 className="w-5 h-5 text-[#333333]" />
-                  </div>
-                  <h2 className="text-base font-bold text-[#333333] tracking-tight">Analytics</h2>
-                </div>
-                <ConsistencyChart />
-              </motion.div>
-
-              {/* Pie chart — 40% */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-                className="lg:w-[40%] bg-white/80 backdrop-blur-xl border border-[#E1F4F3] shadow-xl shadow-[#E1F4F3]/50 rounded-3xl p-6 lg:p-8"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#E1F4F3] flex items-center justify-center shadow-sm">
-                    <PieChart className="w-5 h-5 text-[#333333]" />
-                  </div>
-                  <h2 className="text-base font-bold text-[#333333] tracking-tight">Breakdown</h2>
-                </div>
-                <BreakdownChart />
-              </motion.div>
-            </div>
-
-            {/* ── Bottom Row: History (full width) ── */}
+            {/* ── Draggable 4-Slot Dashboard ── */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-              className="bg-white/80 backdrop-blur-xl border border-[#E1F4F3] shadow-xl shadow-[#E1F4F3]/50 rounded-3xl p-6 lg:p-8 mb-12"
+              transition={{ duration: 0.4, delay: 0.1 }}
+              className="bg-white/80 backdrop-blur-xl border border-[#E1F4F3] shadow-xl shadow-[#E1F4F3]/50 rounded-3xl overflow-hidden"
+            >
+              <DraggableDashboard />
+            </motion.div>
+
+            {/* ── Bottom Row: History (full width, fixed) ── */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
+              className="bg-white/80 backdrop-blur-xl border border-[#E1F4F3] shadow-xl shadow-[#E1F4F3]/50 rounded-3xl p-6 lg:p-8"
             >
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-[#FAFAFA] border border-[#E1F4F3] flex items-center justify-center shadow-sm">

@@ -6,6 +6,7 @@ export const useTask = create((set,get)=>({
     tasks:[],
     history:[],
     stats:[],
+    dashboardLayout:["CONSISTENCY", "BREAKDOWN", "EMPTY", "EMPTY"],
     gettingStatsForGraph:false,
     creatingTask:false,
     deletingSingleTask:false,
@@ -14,6 +15,8 @@ export const useTask = create((set,get)=>({
     updatingSingleTask:false,
     updatingAllTask:false,
     togglingRoutineForToday:false,
+    gettingDashboardLayout:false,
+    savingDashboardLayout:false,
     
 
     createTask:async(data)=>{
@@ -124,5 +127,79 @@ export const useTask = create((set,get)=>({
         finally{
             set({gettingHistory:false})
         }
+    },
+    getDashboardLayout:async()=>{
+        set({gettingDashboardLayout:true})
+        try {
+            const res = await axiosInstance.get("/auth/dashboard/layout")
+            const normalizeType = (type) => {
+                switch (type) {
+                    case "CONSISTENCY":
+                    case "BREAKDOWN":
+                    case "EMPTY":
+                        return type;
+                    default:
+                        return "EMPTY";
+                }
+            };
+            set({dashboardLayout:[
+                normalizeType(res.data.slot1Type),
+                normalizeType(res.data.slot2Type),
+                normalizeType(res.data.slot3Type),
+                normalizeType(res.data.slot4Type)
+            ]})
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to fetch dashboard layout") 
+        }
+        finally{
+            set({gettingDashboardLayout:false})
+        }
+    },
+    saveDashboardLayout:async(newLayout)=>{
+        set({savingDashboardLayout:true})
+        try {
+            const formatType = (type) => {
+                switch (type) {
+                    case "CONSISTENCY":
+                    case "BREAKDOWN":
+                    case "EMPTY":
+                        return type;
+                    default:
+                        return "EMPTY";
+                }
+            };
+            const payload = {
+                slot1Type: formatType(newLayout[0]),
+                slot2Type: formatType(newLayout[1]),
+                slot3Type: formatType(newLayout[2]),
+                slot4Type: formatType(newLayout[3])
+            }
+            const res = await axiosInstance.put("/auth/dashboard/layout", payload)
+            const normalizeType = (type) => {
+                switch (type) {
+                    case "CONSISTENCY":
+                    case "BREAKDOWN":
+                    case "EMPTY":
+                        return type;
+                    default:
+                        return "EMPTY";
+                }
+            };
+            set({dashboardLayout:[
+                normalizeType(res.data.slot1Type),
+                normalizeType(res.data.slot2Type),
+                normalizeType(res.data.slot3Type),
+                normalizeType(res.data.slot4Type)
+            ]})
+            toast.success("Dashboard layout updated")
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to save dashboard layout") 
+        }
+        finally{
+            set({savingDashboardLayout:false})
+        }
+    },
+    setDashboardLayout:(newLayout)=>{
+        set({dashboardLayout:newLayout})
     }
 }))

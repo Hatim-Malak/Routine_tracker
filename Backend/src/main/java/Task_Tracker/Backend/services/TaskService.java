@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import Task_Tracker.Backend.DTO.TaskRequest;
 import Task_Tracker.Backend.models.Task;
 import Task_Tracker.Backend.models.User;
-import Task_Tracker.Backend.repository.TaskCompletionRepo;
 import Task_Tracker.Backend.repository.TaskRepo;
 import jakarta.transaction.Transactional;
 
