@@ -92,7 +92,7 @@ const CreateRoutine = () => {
         </div>
 
         {/* Central Workspace Card */}
-        <div className="bg-white rounded-3xl shadow-xl shadow-black/[0.02] border border-[#E1F4F3] p-6 sm:p-8 relative overflow-hidden">
+        <div className="bg-white rounded-3xl shadow-xl shadow-black/2 border border-[#E1F4F3] p-6 sm:p-8 relative overflow-hidden">
           <form onSubmit={handleSubmit} className="space-y-6">
             
             {/* Rows Container */}

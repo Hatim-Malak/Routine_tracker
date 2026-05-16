@@ -55,7 +55,7 @@ const DashboardPage = () => {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Navbar />
 
-        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main className="flex-1 w-full mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ maxWidth: '1920px' }}>
           {/* ── Page Header ── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -77,7 +77,7 @@ const DashboardPage = () => {
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="mb-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+              className="mb-6 px-4 sm:px-6 lg:px-8"
             >
               <div className="rounded-2xl p-4 flex items-center justify-between gap-4 bg-linear-to-r from-[#FFF7E6] to-[#FFFFFF] border border-[#F5E0B7] shadow-lg">
                 <div className="flex items-center gap-4">

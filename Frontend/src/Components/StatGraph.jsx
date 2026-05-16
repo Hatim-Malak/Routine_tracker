@@ -13,12 +13,12 @@ import {
 import { 
   BarChart3, 
   PieChart as PieChartIcon, 
-  Loader2, 
   CalendarDays, 
   Target, 
   Clock, 
   Trophy 
 } from "lucide-react";
+import ChartErrorBoundary from "./ChartErrorBoundary";
 
 const PIE_COLORS = ["#333333", "#706C61", "#A6A399", "#E1F4F3", "#999999", "#B0CCC9"];
 const PRIMARY_CHARCOAL = "#323643"; // Deep charcoal
@@ -53,10 +53,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 /* ── Helper Wrappers ── */
-const LoadingGraph = () => (
-  <div className="flex flex-col items-center justify-center py-8 gap-3 h-full min-h-[220px]">
-    <Loader2 className="w-7 h-7 text-[#333333] animate-spin" />
-    <p className="text-sm font-medium text-[#706C61]">Loading stats…</p>
+const ChartSkeleton = () => (
+  <div className="w-full h-full min-h-[220px] rounded-3xl border border-[#E1F4F3] bg-[#FAFAFA] p-6 animate-pulse">
+    <div className="h-4 w-28 rounded-full bg-[#E1F4F3] mb-5" />
+    <div className="h-[calc(100%-2.5rem)] rounded-[1.5rem] bg-[#E1F4F3]/80" />
   </div>
 );
 
@@ -83,23 +83,26 @@ export const ConsistencyChart = () => {
 
   return (
     <ChartContainer title="Consistency" delay={0}>
-      {data.length > 0 ? (
-        // ADDED minWidth={10} minHeight={10} to stop initial render warnings
-        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor={PRIMARY_CHARCOAL} stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#E1F4F3" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
-            <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
-            <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
-            <ReTooltip content={<CustomTooltip />} cursor={{ stroke: '#E1F4F3', strokeWidth: 2, strokeDasharray: '4 4' }} />
-            <Area type="monotone" dataKey="totalCompleted" name="Completed" stroke={PRIMARY_CHARCOAL} fillOpacity={1} fill="url(#colorCount)" strokeWidth={3} activeDot={{ r: 6, fill: PRIMARY_CHARCOAL, stroke: "#FFFFFF", strokeWidth: 2, shadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
-          </AreaChart>
-        </ResponsiveContainer>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={PRIMARY_CHARCOAL} stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="#E1F4F3" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
+              <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
+              <ReTooltip content={<CustomTooltip />} cursor={{ stroke: '#E1F4F3', strokeWidth: 2, strokeDasharray: '4 4' }} />
+              <Area type="monotone" dataKey="totalCompleted" name="Completed" stroke={PRIMARY_CHARCOAL} fillOpacity={1} fill="url(#colorCount)" strokeWidth={3} activeDot={{ r: 6, fill: PRIMARY_CHARCOAL, stroke: "#FFFFFF", strokeWidth: 2, shadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={BarChart3} title="No consistency data yet" subtitle="Complete a routine to see your stats!" />
       )}
@@ -114,18 +117,22 @@ export const BreakdownChart = () => {
 
   return (
     <ChartContainer title="Task Breakdown" delay={0.1}>
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-          <PieChart>
-            <Pie data={data} dataKey="completionCount" nameKey="routineName" cx="50%" cy="45%" outerRadius="80%" innerRadius="50%" paddingAngle={4} label={false}>
-              {data.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="#FFFFFF" strokeWidth={3} style={{ filter: "drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.05))" }} />
-              ))}
-            </Pie>
-            <ReTooltip content={<CustomTooltip />} />
-            <Legend iconType="circle" iconSize={8} verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: "12px", fontWeight: 500, color: "#706C61", paddingTop: "10px" }} />
-          </PieChart>
-        </ResponsiveContainer>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+            <PieChart>
+              <Pie data={data} dataKey="completionCount" nameKey="routineName" cx="50%" cy="45%" outerRadius="80%" innerRadius="50%" paddingAngle={4} label={false}>
+                {data.map((_, index) => (
+                  <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="#FFFFFF" strokeWidth={3} style={{ filter: "drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.05))" }} />
+                ))}
+              </Pie>
+              <ReTooltip content={<CustomTooltip />} />
+              <Legend iconType="circle" iconSize={8} verticalAlign="bottom" align="center" wrapperStyle={{ fontSize: "12px", fontWeight: 500, color: "#706C61", paddingTop: "10px" }} />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={PieChartIcon} title="No breakdown data yet" subtitle="Complete a routine to see your stats!" />
       )}
@@ -140,16 +147,20 @@ export const WeeklyActivityChart = () => {
 
   return (
     <ChartContainer title="Weekly Activity" delay={0.2}>
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
-            <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
-            <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
-            <ReTooltip content={<CustomTooltip />} cursor={{ fill: '#E1F4F3', opacity: 0.4 }} />
-            <Bar dataKey="count" name="Tasks Completed" fill={PRIMARY_CHARCOAL} radius={[6, 6, 0, 0]} maxBarSize={40} />
-          </BarChart>
-        </ResponsiveContainer>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+            <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
+              <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
+              <ReTooltip content={<CustomTooltip />} cursor={{ fill: '#E1F4F3', opacity: 0.4 }} />
+              <Bar dataKey="count" name="Tasks Completed" fill={PRIMARY_CHARCOAL} radius={[6, 6, 0, 0]} maxBarSize={40} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={CalendarDays} title="No weekly data yet" subtitle="Your weekly activity will appear here." />
       )}
@@ -164,16 +175,20 @@ export const RoutineBalanceChart = () => {
 
   return (
     <ChartContainer title="Category Balance" delay={0.3}>
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-          <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-            <PolarGrid stroke="#E1F4F3" />
-            <PolarAngleAxis dataKey="category" tick={{ fill: '#706C61', fontSize: 11, fontWeight: 600 }} />
-            <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
-            <Radar name="Balance Score" dataKey="score" stroke={PRIMARY_CHARCOAL} fill={PRIMARY_CHARCOAL} fillOpacity={0.4} />
-            <ReTooltip content={<CustomTooltip />} />
-          </RadarChart>
-        </ResponsiveContainer>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
+              <PolarGrid stroke="#E1F4F3" />
+              <PolarAngleAxis dataKey="category" tick={{ fill: '#706C61', fontSize: 11, fontWeight: 600 }} />
+              <PolarRadiusAxis angle={30} domain={[0, 'dataMax']} tick={false} axisLine={false} />
+              <Radar name="Balance Score" dataKey="score" stroke={PRIMARY_CHARCOAL} fill={PRIMARY_CHARCOAL} fillOpacity={0.4} />
+              <ReTooltip content={<CustomTooltip />} />
+            </RadarChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={Target} title="No balance data yet" subtitle="Complete tasks across different categories!" />
       )}
@@ -188,16 +203,20 @@ export const TimeOfDayChart = () => {
 
   return (
     <ChartContainer title="Peak Focus Hours" delay={0.4}>
-      {data.length > 0 ? (
-        <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-          <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
-            <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
-            <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
-            <ReTooltip content={<CustomTooltip />} cursor={{ stroke: '#E1F4F3', strokeWidth: 2 }} />
-            <Line type="smooth" dataKey="completed" name="Tasks Completed" stroke={PRIMARY_CHARCOAL} strokeWidth={3} dot={{ r: 4, fill: "#FFFFFF", stroke: PRIMARY_CHARCOAL, strokeWidth: 2 }} activeDot={{ r: 6, fill: PRIMARY_CHARCOAL, stroke: "#FFFFFF", strokeWidth: 2, shadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
-          </LineChart>
-        </ResponsiveContainer>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+            <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#E1F4F3" vertical={false} />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={{ stroke: "#E1F4F3" }} tickLine={false} tickMargin={12} />
+              <YAxis tick={{ fontSize: 11, fill: "#706C61", fontWeight: 500 }} axisLine={false} tickLine={false} allowDecimals={false} tickMargin={12} />
+              <ReTooltip content={<CustomTooltip />} cursor={{ stroke: '#E1F4F3', strokeWidth: 2 }} />
+              <Line type="smooth" dataKey="completed" name="Tasks Completed" stroke={PRIMARY_CHARCOAL} strokeWidth={3} dot={{ r: 4, fill: "#FFFFFF", stroke: PRIMARY_CHARCOAL, strokeWidth: 2 }} activeDot={{ r: 6, fill: PRIMARY_CHARCOAL, stroke: "#FFFFFF", strokeWidth: 2, shadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={Clock} title="No time data yet" subtitle="Complete tasks to see your peak hours!" />
       )}
@@ -213,20 +232,24 @@ export const GoalProgressChart = () => {
 
   return (
     <ChartContainer title="Weekly Goal Progress" delay={0.5}>
-      {data.length > 0 ? (
-        <div className="w-full h-full relative flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="90%" barSize={20} data={[{ name: "Progress", value: progressValue }]} startAngle={90} endAngle={-270}>
-              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-              <RadialBar background={{ fill: '#E1F4F3' }} dataKey="value" cornerRadius={10} fill={PRIMARY_CHARCOAL} />
-              <ReTooltip content={<CustomTooltip />} />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-3xl font-extrabold text-[#333333]">{progressValue}%</span>
-            <span className="text-xs font-semibold text-[#706C61] uppercase tracking-widest mt-1">Goal Reached</span>
+      {gettingStatsForGraph ? (
+        <ChartSkeleton />
+      ) : data.length > 0 ? (
+        <ChartErrorBoundary>
+          <div className="w-full h-full relative flex items-center justify-center">
+            <ResponsiveContainer width="100%" height="100%" minWidth={10} minHeight={10}>
+              <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="90%" barSize={20} data={[{ name: "Progress", value: progressValue }]} startAngle={90} endAngle={-270}>
+                <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+                <RadialBar background={{ fill: '#E1F4F3' }} dataKey="value" cornerRadius={10} fill={PRIMARY_CHARCOAL} />
+                <ReTooltip content={<CustomTooltip />} />
+              </RadialBarChart>
+            </ResponsiveContainer>
+            <div className="absolute flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-3xl font-extrabold text-[#333333]">{progressValue}%</span>
+              <span className="text-xs font-semibold text-[#706C61] uppercase tracking-widest mt-1">Goal Reached</span>
+            </div>
           </div>
-        </div>
+        </ChartErrorBoundary>
       ) : (
         <EmptyState icon={Trophy} title="No goals set" subtitle="Set a target to track your progress." />
       )}

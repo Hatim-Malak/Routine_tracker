@@ -1,8 +1,12 @@
-import React, { useState, useEffect } from "react";
-import DashboardWidget from "./DashboardWidget";
+import React, { useState, useEffect, lazy, Suspense } from "react";
+const DashboardWidget = lazy(() => import("./DashboardWidget"));
 import WidgetSelector from "./WidgetSelector";
 import { useTask } from "../Store/UseTaskStore";
 import { Loader2, ArrowLeft, ArrowRight, RefreshCw } from "lucide-react";
+
+const WidgetSlotFallback = () => (
+  <div className="w-full h-full min-w-0 min-h-0 rounded-3xl border border-[#E1F4F3] bg-[#FAFAFA] p-6 animate-pulse" />
+);
 
 const DraggableDashboard = () => {
   const { 
@@ -63,9 +67,6 @@ const DraggableDashboard = () => {
     ];
     saveDashboardLayout(newLayout);
   };
-
-  // Global loading overlay state for a smooth initial dashboard paint
-  const isInitialLoading = gettingStatsForGraph && dashboardLayout.every(w => w !== "EMPTY");
 
   return (
     <>
@@ -148,7 +149,9 @@ const DraggableDashboard = () => {
               {/* Render Section */}
               {widgetType !== "EMPTY" ? (
                 <div className="flex-1 min-w-0 min-h-0 relative">
-                  <DashboardWidget type={widgetType} />
+                  <Suspense fallback={<WidgetSlotFallback />}>
+                    <DashboardWidget type={widgetType} />
+                  </Suspense>
                 </div>
               ) : (
                 <button
@@ -167,7 +170,7 @@ const DraggableDashboard = () => {
               )}
 
               {/* Layout Mutation Spinner Mask */}
-              {(savingDashboardLayout || isInitialLoading) && (
+              {savingDashboardLayout && (
                 <div className="absolute inset-0 bg-white/70 backdrop-blur-[1px] rounded-3xl flex items-center justify-center z-30 transition-all">
                   <Loader2 className="w-8 h-8 text-[#323643] animate-spin" />
                 </div>

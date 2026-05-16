@@ -1,14 +1,27 @@
-import React from "react";
-import { 
-  ConsistencyChart, 
-  BreakdownChart,
-  WeeklyActivityChart,
-  RoutineBalanceChart,
-  TimeOfDayChart,
-  GoalProgressChart
-} from "./StatGraph";
+import React, { Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import ChartErrorBoundary from "./ChartErrorBoundary";
+
+const ConsistencyChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.ConsistencyChart })));
+const BreakdownChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.BreakdownChart })));
+const WeeklyActivityChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.WeeklyActivityChart })));
+const RoutineBalanceChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.RoutineBalanceChart })));
+const TimeOfDayChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.TimeOfDayChart })));
+const GoalProgressChart = lazy(() => import("./StatGraph").then((module) => ({ default: module.GoalProgressChart })));
+
+const WidgetLoadingSkeleton = ({ title }) => (
+  <div className="w-full h-full min-w-0 min-h-0 rounded-3xl border border-[#E1F4F3] bg-[#FAFAFA] p-6 animate-pulse">
+    <div className="h-4 w-36 rounded-full bg-[#E1F4F3] mb-5" />
+    <div className="h-[calc(100%-3.5rem)] rounded-[1.5rem] bg-[#E1F4F3]/80" />
+  </div>
+);
+
+const WidgetSuspenseWrapper = ({ title, children }) => (
+  <Suspense fallback={<WidgetLoadingSkeleton title={title} />}>
+    <ChartErrorBoundary>{children}</ChartErrorBoundary>
+  </Suspense>
+);
 
 const DashboardWidget = ({ type }) => {
   const renderWidget = () => {
@@ -21,7 +34,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <ConsistencyChart />
+            <WidgetSuspenseWrapper title="Consistency">
+              <ConsistencyChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "BREAKDOWN":
@@ -32,7 +47,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <BreakdownChart />
+            <WidgetSuspenseWrapper title="Breakdown">
+              <BreakdownChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "WEEKLY_ACTIVITY":
@@ -43,7 +60,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <WeeklyActivityChart />
+            <WidgetSuspenseWrapper title="Weekly Activity">
+              <WeeklyActivityChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "ROUTINE_BALANCE":
@@ -54,7 +73,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <RoutineBalanceChart />
+            <WidgetSuspenseWrapper title="Category Balance">
+              <RoutineBalanceChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "TIME_OF_DAY":
@@ -65,7 +86,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <TimeOfDayChart />
+            <WidgetSuspenseWrapper title="Peak Focus Hours">
+              <TimeOfDayChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "GOAL_PROGRESS":
@@ -76,7 +99,9 @@ const DashboardWidget = ({ type }) => {
             transition={{ duration: 0.4 }}
             className="w-full h-full min-w-0 min-h-0"
           >
-            <GoalProgressChart />
+            <WidgetSuspenseWrapper title="Weekly Goal Progress">
+              <GoalProgressChart />
+            </WidgetSuspenseWrapper>
           </motion.div>
         );
       case "HISTORY":

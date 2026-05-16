@@ -48,6 +48,7 @@ public class TaskCompletionService {
 
         if(existingCompletion.isPresent()){
             taskCompletionRepo.delete(existingCompletion.get());
+            invalidateUserCache(user.getId());
             return "Routine unchecked for today";
         }
 
@@ -126,13 +127,15 @@ public class TaskCompletionService {
             .map(entry -> new DashBoardStatsResponse.WeeklyData(entry.getKey(), entry.getValue()))
             .collect(Collectors.toList());
 
-        // 5. Goal Progress (Calculated against a target of 15 completions/week)
         long completionsThisWeek = recentCompletions.stream()
             .filter(tc -> !tc.getCompletionDate().isBefore(sevenDaysAgo))
             .count();
         
-        int goalTarget = 15; 
-        int progressPercentage = (int) Math.min((completionsThisWeek * 100) / goalTarget, 100); 
+        int totalUserTasks = taskRepo.findByUser(user).size();
+        
+        int goalTarget = Math.max(totalUserTasks * 7, 1); 
+        
+        int progressPercentage = (int) Math.min((completionsThisWeek * 100) / goalTarget, 100);
         
         List<DashBoardStatsResponse.GoalProgressData> goalData = List.of(
             new DashBoardStatsResponse.GoalProgressData("Weekly Goal", progressPercentage)
