@@ -4,6 +4,7 @@ import { useTask } from "../Store/UseTaskStore";
 import Navbar from "../Components/Navbar";
 import DraggableDashboard from "../Components/DraggableDashboard";
 import HistoryGraph from "../Components/HistoryGraph";
+import Seo from "../Components/Seo";
 import { CalendarDays, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -36,6 +37,12 @@ const DashboardPage = () => {
 
   return (
     <div className="min-h-screen relative bg-[#FAFAFA] overflow-hidden">
+      <Seo
+        title="Dashboard — RoutineX"
+        description="Your dashboard: four configurable widgets and a 30-day history heatmap to track progress and streaks."
+        url="https://example.com/dashboard"
+        canonical="https://example.com/dashboard"
+      />
       {/* ── Fixed Geometric Canvas Background ── */}
       <div 
         className="absolute inset-0 z-0 opacity-40 pointer-events-none"

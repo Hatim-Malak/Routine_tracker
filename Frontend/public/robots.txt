@@ -1,0 +1,8 @@
+# robots.txt for Task Tracker
+# Replace example.com with your production domain
+User-agent: *
+Allow: /
+Sitemap: https://example.com/sitemap.xml
+
+# Crawl-delay can be added if your backend needs it
+# Crawl-delay: 10

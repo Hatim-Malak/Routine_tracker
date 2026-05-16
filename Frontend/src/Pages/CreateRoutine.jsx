@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useTask } from "../Store/UseTaskStore";
 import { Plus, Trash2, ArrowLeft, Loader2, Save, Layers } from "lucide-react";
+import Seo from "../Components/Seo";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
@@ -62,6 +63,12 @@ const CreateRoutine = () => {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+      <Seo
+        title="Create Routine — RoutineX"
+        description="Design a new routine with time-blocked tasks and build consistent streaks."
+        url="https://example.com/create-routine"
+        canonical="https://example.com/create-routine"
+      />
       <div className="max-w-4xl w-full space-y-8">
         
         {/* Header Section */}

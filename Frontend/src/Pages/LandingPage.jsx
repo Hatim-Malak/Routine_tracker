@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useAuth } from "../Store/UseAuthStore";
 import { Loader2, ArrowRight, Clock, CalendarDays, PieChart, Target } from "lucide-react";
+import Seo from "../Components/Seo";
 
 /* ── Floating Mockup Component ── */
 const GraphMockup = () => {
@@ -54,6 +55,21 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] font-sans selection:bg-[#E1F4F3] selection:text-[#333333]">
+      <Seo
+        title="RoutineX — Master your routine"
+        description="RoutineX helps you build consistent habits, visualize progress, and reclaim time with a clean dashboard and history charts."
+        url="https://example.com/"
+        canonical="https://example.com/"
+        image="https://example.com/og-image.png"
+        structuredData={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          name: "RoutineX — Master your routine",
+          description: "RoutineX helps you build consistent habits, visualize progress, and reclaim time with a clean dashboard and history charts.",
+          url: "https://example.com/",
+          author: { "@type": "Organization", name: "RoutineX" }
+        }}
+      />
       {/* Shared Navbar Strip across landing routes */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-[#FFFFFF]/80 backdrop-blur-md border-b border-[#E1F4F3]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
