@@ -36,7 +36,8 @@ const onRefreshed = (token) => {
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = getStoredToken();
-    if (token) {
+    const isAuthRoute = config.url === "/auth/login" || config.url === "/auth/register";
+    if (token && !isAuthRoute) {
       config.headers = config.headers ?? {};
       config.headers.Authorization = `Bearer ${token}`;
     }
